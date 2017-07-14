@@ -1,4 +1,4 @@
 module.exports = {
-  'secret': 'devdacticIsAwesome',
-  'database': 'mongodb://127.0.0.1:27017/db'
+  'secret': 'manyamSKMkeren',
+  'database': 'mongodb://manyanSKM:manyanSKM@ds157682.mlab.com:57682/token-auth-db'
 };
