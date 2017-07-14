@@ -8,6 +8,7 @@ var config      = require('./config/database'); // get db config file
 var User        = require('./app/models/user'); // get the mongoose model
 var port        = process.env.PORT || 8080;
 var jwt         = require('jwt-simple');
+var cors        = require('cors');
  
 // get our request parameters
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -15,6 +16,7 @@ app.use(bodyParser.json());
  
 // log to console
 app.use(morgan('dev'));
+app.use(cors());
  
 // Use the passport package in our application
 app.use(passport.initialize());
