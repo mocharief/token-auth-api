@@ -123,9 +123,27 @@ getToken = function (headers) {
   }
 };
 
-//route akses datauser (POST http://localhost:8080/api/dataterlarang)
-apiRoutes.get('/datauser', function(req, res) {
-  User.find({}, function(err,docs) {
-    res.json(docs);
-  })
+
+//route akses data user hanya oleh admin (GET http://localhost:8080/api/datauser )
+apiRoutes.get('/datauser', passport.authenticate('jwt', { session: false}), function(req, res) {
+  var token = getToken(req.headers);
+  if (token) {
+    var decoded = jwt.decode(token, config.secret);
+    User.findOne({
+      name: decoded.name,
+      sebagai: decoded.sebagai
+    }, function(err, user) {
+        if (err) throw err;
+ 
+        if (!user) {
+          return res.status(403).send({success: false, msg: 'User tidak ditemukan!'});
+        } else if (user.sebagai == 'admin'){
+          User.find({}, function(err,docs){
+          res.json({msg: 'Selamat datang ' + user.name + ' sebagai ' + user.sebagai + '! Berikut seluruh data-data user', docs});
+          })        
+        } else {
+          res.json({success: false, msg: 'AKSES DATA USER HANYA DAPAT DILAKUKAN OLEH ADMIN' });
+        }
+    });
+  }
 });

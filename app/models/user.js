@@ -47,14 +47,5 @@ UserSchema.methods.comparePassword = function (passw, cb) {
         cb(null, isMatch);
     });
 };
- 
-UserSchema.methods.compareSebagai = function (sebagaiapa, cc) {
-    bcrypt.compare(sebagaiapa, this.sebagai, function (err, benar) {
-        if (err) {
-            return cc(err);
-        }
-        cc(null, benar);
-    });
-}; 
 
 module.exports = mongoose.model('User', UserSchema);
