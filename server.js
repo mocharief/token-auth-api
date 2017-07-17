@@ -8,6 +8,7 @@ var config      = require('./config/database'); // get db config file
 var User        = require('./app/models/user'); // get the mongoose model
 var port        = process.env.PORT || 8080;
 var jwt         = require('jwt-simple');
+var cors        = require('cors');
  
 // get our request parameters
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -15,6 +16,7 @@ app.use(bodyParser.json());
  
 // log to console
 app.use(morgan('dev'));
+app.use(cors());
  
 // Use the passport package in our application
 app.use(passport.initialize());
@@ -26,7 +28,7 @@ app.get('/', function(req, res) {
  
 // Start the server
 app.listen(port);
-console.log('There will be dragons: http://localhost:' + port);
+console.log('token_auth_api: http://localhost:' + port);
 
 // connect to database
 mongoose.connect(config.database);
@@ -95,14 +97,11 @@ apiRoutes.get('/memberinfo', passport.authenticate('jwt', { session: false}), fu
       name: decoded.name
     }, function(err, user) {
         if (err) throw err;
- 
-        if (!user) {
-          return res.status(403).send({success: false, msg: 'Autentikasi gagal ' + user.sebagai + ' tidak ditemukan'});
-        } else if (user.sebagai == 'admin'){
-          res.json({success: true, msg: 'Selamat datang ' + user.name + ' sebagai ' + user.sebagai + '! Anda dapat mengakses : 1,2,3,4,5,6,7'});
-          
-        } else {
-          res.json({success: true, msg: 'Selamat datang ' + user.name + ' sebagai ' + user.sebagai + '! Anda dapat mengakses : 2,4,6,' });
+
+        if(user){
+          res.json({
+            data: user
+          })
         }
     });
   } else {
@@ -123,27 +122,22 @@ getToken = function (headers) {
   }
 };
 
-
-//route akses data user hanya oleh admin (GET http://localhost:8080/api/datauser )
+//route akses datauser (POST http://localhost:8080/api/datauser)
 apiRoutes.get('/datauser', passport.authenticate('jwt', { session: false}), function(req, res) {
   var token = getToken(req.headers);
+
   if (token) {
     var decoded = jwt.decode(token, config.secret);
-    User.findOne({
-      name: decoded.name,
-      sebagai: decoded.sebagai
-    }, function(err, user) {
+    User.find({}, function(err, user) {
         if (err) throw err;
  
-        if (!user) {
-          return res.status(403).send({success: false, msg: 'User tidak ditemukan!'});
-        } else if (user.sebagai == 'admin'){
-          User.find({}, function(err,docs){
-          res.json({msg: 'Selamat datang ' + user.name + ' sebagai ' + user.sebagai + '! Berikut seluruh data-data user', docs});
-          })        
+        if (decoded.sebagai == 'admin') {
+          res.json(user);
         } else {
-          res.json({success: false, msg: 'AKSES DATA USER HANYA DAPAT DILAKUKAN OLEH ADMIN' });
+          return res.status(403).send('YOU ARE FORBIDDEN');
         }
     });
+  } else {
+    return res.status(403).send({success: false, msg: 'Tidak ada token.'});
   }
 });
