@@ -97,14 +97,11 @@ apiRoutes.get('/memberinfo', passport.authenticate('jwt', { session: false}), fu
       name: decoded.name
     }, function(err, user) {
         if (err) throw err;
- 
-        if (!user) {
-          return res.status(403).send({success: false, msg: 'Autentikasi gagal ' + user.sebagai + ' tidak ditemukan'});
-        } else if (user.sebagai == 'admin'){
-          res.json({success: true, msg: 'Selamat datang ' + user.name + ' sebagai ' + user.sebagai + '! Anda dapat mengakses : 1,2,3,4,5,6,7'});
-          
-        } else {
-          res.json({success: true, msg: 'Selamat datang ' + user.name + ' sebagai ' + user.sebagai + '! Anda dapat mengakses : 2,4,6,' });
+
+        if(user){
+          res.json({
+            data: user
+          })
         }
     });
   } else {
@@ -126,8 +123,21 @@ getToken = function (headers) {
 };
 
 //route akses datauser (POST http://localhost:8080/api/dataterlarang)
-apiRoutes.get('/datauser', function(req, res) {
-  User.find({}, function(err,docs) {
-    res.json(docs);
-  })
+apiRoutes.get('/datauser', passport.authenticate('jwt', { session: false}), function(req, res) {
+  var token = getToken(req.headers);
+
+  if (token) {
+    var decoded = jwt.decode(token, config.secret);
+    User.find({}, function(err, user) {
+        if (err) throw err;
+ 
+        if (decoded.sebagai == 'admin') {
+          res.json(user);
+        } else {
+          return res.status(403).send('YOU ARE FORBIDDEN');
+        }
+    });
+  } else {
+    return res.status(403).send({success: false, msg: 'Tidak ada token.'});
+  }
 });
